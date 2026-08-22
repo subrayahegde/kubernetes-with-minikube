@@ -1,0 +1,64 @@
+eval $(minikube docker-env)
+
+First, activate the built-in NGINX Ingress controller addon inside your Minikube cluster:
+minikube addons enable ingress
+
+docker build -t backend:latest ./backend
+docker build -t frontend:v2 ./frontend
+
+#Create ingress YAML
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 5000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+
+kubectl apply -f ingress.yaml
+
+kubectl get ingress
+kubectl describe ingress app-ingress
+
+#Apply backend and frontend also
+kubectl apply -f backend.yaml
+kubectl apply -f frontend.yaml
+
+#Then check
+kubectl get svc
+kubectl get endpoints
+kubectl get pods
+
+minikube image ls
+
+#Check minikube ip to get IP Address 
+
+#Check end points (in broswer also)
+curl http://192.168.49.2/
+curl http://192.168.49.2/api/products
+
+If we need to use Contract-Analzer app, then temporarily disable the ingress :
+minikube addons disable ingress
+And 
+run minikube tunnel.
+
+
+
+

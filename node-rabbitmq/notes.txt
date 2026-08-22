@@ -1,0 +1,20 @@
+docker build -t app-web:latest ./web
+docker build -t app-worker:latest ./worker
+
+minikube image rm app-web:latest (If at all needed)
+minikube image load app-web:latest (If at all needed)
+
+kubectl apply -f rabbitmq.yaml
+kubectl apply -f app.yaml
+
+kubectl rollout restart deployment/web
+
+minikube tunnel
+
+kubectl get svc ...Note the External IP Addr.
+
+To check logs:
+kubectl logs <pod-name> 
+
+
+

@@ -1,0 +1,12 @@
+Create an account in dockerhub with userid as "hegdes2026".
+docker login -u hegdes2026
+
+docker build --build-arg NEXT_PUBLIC_BACKEND_URL="http://localhost:5000" -t hegdes2026/frontend:latest ./frontend
+docker push hegdes2026/frontend:latest
+
+docker build --build-arg DATABASE_URL=postgresql://postgres:Password123@my-postgres.postgres.database.azure.com:5432/clidb?sslmode=require -t hegdes2026/backend:latest ./backend
+docker push hegdes2026/backend:latest
+
+docker run -d -p 5000:5000 hegdes2026/backend:latest
+docker run -d -p 80:3000 hegdes2026/frontend:latest
+
