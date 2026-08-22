@@ -16,5 +16,13 @@ kubectl get svc ...Note the External IP Addr.
 To check logs:
 kubectl logs <pod-name> 
 
+kubectl get nodes
+kebectl get svc
+kubectl get pods
+
+kubectl get deployments
+
+#Check the NAME from above and use below to scale up/down.
+kubectl scale deployment <NAME> --replicas=5
 
 
