@@ -28,6 +28,35 @@ kubectl exec -it <mysql-pod> -- /opt/mssql-tools/bin/sqlcmd -S localhost -U root
 >use orderservice; 
 Create 2 tables by using init.sql 
 
+If you want to avoide the above step,
+---------------------------------------------------
+Create a folder named data. Move your init.sql script file inside that folder.
+
+Upload the file to Kubernetes by running:
+kubectl create configmap mysql-init-scripts --from-file=./data
+
+And...in kubernetes YAML file, insert the volumeMounts and volumes blocks into your "Deployment" section inside your YAML file.
+
+# 1. ADDED: This maps the volume inside the container
+volumeMounts:
+- name: mysql-init-volume
+  mountPath: /docker-entrypoint-initdb.d
+
+# 2. ADDED: This links the pod to your configmap (aligned with containers)
+volumes:
+- name: mysql-init-volume
+configMap:
+  name: mysql-init-scripts
+----------------------------------------------------------
+Check ...
+
+kubectl get configmap mysql-init-scripts -o yaml
+kubectl exec -it <mysql-pod> -- ls -la /docker-entrypoint-initdb.d
+kubectl logs Deployment/mysql
+kubectl logs <mysql-pod>
+
+Then, run kubectl apply -f rabbit-app-stack.yaml.
+
 kubectl port-forward svc/orderservice-service 8080:8080
 kubectl port-forward --address 127.0.0.1 pod/<orderservice-c9f789c54-9z2lv> 8080:8080
 
@@ -48,4 +77,3 @@ curl -X POST http://localhost:8080/api/Product/BuyProducts \
 
 Check newly created records in Product and Order tables. 
 Also, check kubectl logs <orderservice-c9f789c54-9z2lv>
-
