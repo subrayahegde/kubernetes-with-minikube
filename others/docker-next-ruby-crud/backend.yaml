@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: backend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        env:
+        # Note: 'database' must be a valid service name if running DB in cluster
+        - name: DATABASE_URL
+          value: "postgresql://postgres:Password123@host.minikube.internal:5432/clidb"
+        - name: RAILS_ENV
+          value: "development"
+        - name: PORT
+          value: "5000"
+        - name: BUNDLE_PATH
+          value: "/gems"
+        - name: BUNDLE_BIN
+          value: "/gems/bin"
+
+        - name: BUNDLE_WITHOUT
+          value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+
+spec:
+  selector:
+    app: backend
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+  type: LoadBalancer
+

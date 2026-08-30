@@ -1,0 +1,13 @@
+
+kubectl exec -it deployment/backend -- chmod +x bin/rails
+
+kubectl exec -it deployment/backend -- bundle exec rails console
+ActiveRecord::Base.connection.execute("INSERT INTO schema_migrations (version) VALUES ('001')")
+kubectl exec -it deployment/backend -- bundle exec rails db:migrate:status
+
+minikube image load backend:latest
+minikube image load frontend:latest
+
+
+
+

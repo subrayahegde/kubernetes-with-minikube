@@ -1,0 +1,16 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch('RAILS_MAX_THREADS', 5) %>
+  url: <%= ENV.fetch('DATABASE_URL', 'postgresql://postgres:Password123@host.minikube.internal:5432/clidb') %>
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+  database: clidb_test
+
+production:
+  <<: *default
+  database: clidb_production
