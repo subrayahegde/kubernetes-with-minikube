@@ -1,0 +1,132 @@
+# =========================================================================
+# 1. APACHE KAFKA CONFIGURATION, DEPLOYMENT, AND NETWORK SERVICES
+# =========================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-config
+data:
+  # Translating your environment attributes perfectly for native KRaft 3.7.2
+  KAFKA_NODE_ID: "1"
+  KAFKA_PROCESS_ROLES: "broker,controller"
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+  KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092"
+  KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-service:29092,PLAINTEXT_HOST://localhost:9092"
+  KAFKA_CONTROLLER_QUORUM_VOTERS: "1@127.0.0.1:29093"
+  KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT_HOST"
+  KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+  KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+  KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+  KAFKA_LOG_DIRS: "/tmp/kraft-combined-logs"
+  CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+      - name: kafka
+        image: apache/kafka:3.7.2
+        ports:
+        - containerPort: 29092
+        - containerPort: 9092
+        envFrom:
+        - configMapRef:
+            name: kafka-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service # 👈 Serves as your inner cluster URL endpoint DNS
+spec:
+  selector:
+    app: kafka
+  ports:
+    - name: internal
+      port: 29092
+      targetPort: 29092
+    - name: host-facing
+      port: 9092
+      targetPort: 9092
+
+---
+# =========================================================================
+# 2. .NET PRODUCER API CONTAINER DEPLOYMENT AND NODEPORT NETWORK SERVICE
+# =========================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: producer
+  template:
+    metadata:
+      labels:
+        app: producer
+    spec:
+      containers:
+      - name: producer
+        image: producer:latest
+        imagePullPolicy: Never # Forces Kubernetes to seek your local Minikube Docker images
+        command: ["sh", "-c", "sleep 10 && dotnet Producer.dll"]
+        ports:
+        - containerPort: 8080
+        env:
+        - name: Kafka__BootstrapServers
+          value: "kafka-service:29092" # 👈 Replaces "kafka-broker:29092" with internal K8s DNS
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: producer-service
+spec:
+  type: NodePort # Exposes your .NET endpoint outwards to your development browser/curl client
+  selector:
+    app: producer
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080 # Maps the API globally to port 30080 on your virtual cluster network
+
+---
+# =========================================================================
+# 3. .NET CONSUMER WORKER CONTAINER DEPLOYMENT
+# =========================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      containers:
+      - name: consumer
+        image: consumer:latest
+        imagePullPolicy: Never
+        command: ["sh", "-c", "sleep 10 && dotnet Consumer.dll"]
+        env:
+        - name: Kafka__BootstrapServers
+          value: "kafka-service:29092" # 👈 Replaces "kafka-broker:29092" with internal K8s DNS
+

@@ -1,0 +1,32 @@
+# 1. Start Minikube
+minikube start
+
+# 2. Point your local Docker CLI to Minikube's internal Docker engine
+eval $(minikube docker-env)
+
+# 3. Build your application images directly inside Minikube
+docker build -t producer:latest ./Producer
+docker build -t consumer:latest ./Consumer
+
+minikube image ls
+
+minikube image load docker.io/library/producer:latest
+minikube image load docker.io/library/consumer:latest
+
+kubectl apply -f rabbit-app-stack.yaml
+
+kubectl get pods
+kubectl get pods -w
+
+kubectl logs -f deployment/consumer
+kubectl rollout restart deployment/consumer
+
+minikube service producer-service --url
+
+curl -X POST http://192.168.49.2:30080/api/location \
+     -H "Content-Type: application/json" \
+     -d '{"Latitude": 12.9716, "Longitude": 77.5946, "Date": "2026-08-27T14:30:00Z"}
+
+kubectl logs -f <consumer-pod-name>
+'
+
