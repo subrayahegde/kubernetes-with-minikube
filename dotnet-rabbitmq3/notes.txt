@@ -1,0 +1,51 @@
+# 1. Start Minikube
+minikube start
+
+# 2. Point your local Docker CLI to Minikube's internal Docker engine
+eval $(minikube docker-env)
+
+# 3. Build your application images directly inside Minikube
+docker build -t orderservice:latest ./OrderService
+
+minikube image ls
+
+minikube image load orderservice:latest
+
+kubectl apply -f rabbit-app-stack.yaml
+
+kubectl get pods
+kubectl get pods -w
+kubectl get svc
+
+kubectl logs -f deployment/orderservice
+kubectl rollout restart deployment/orderservice
+
+minikube service orderservice-service --url
+
+kubectl exec -it <mysql-pod> -- mysql -u root -p
+kubectl exec -it <mysql-pod> -- /opt/mssql-tools/bin/sqlcmd -S localhost -U root -P Password123#
+
+>use orderservice; 
+Create 2 tables by using init.sql 
+
+kubectl port-forward svc/orderservice-service 8080:8080
+kubectl port-forward --address 127.0.0.1 pod/<orderservice-c9f789c54-9z2lv> 8080:8080
+
+curl -X POST http://localhost:8080/api/Product/AddProduct \
+  -H "Content-Type: application/json" \
+  -d '{"Name": "Sample Product", "Description": "A great item", "Price":19.99}' 
+
+curl -X POST http://localhost:8080/api/Product/BuyProducts \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cartItems": [
+      {
+        "ProductId": 1,
+        "Qty": 2
+      }
+    ]
+  }'
+
+Check newly created records in Product and Order tables. 
+Also, check kubectl logs <orderservice-c9f789c54-9z2lv>
+

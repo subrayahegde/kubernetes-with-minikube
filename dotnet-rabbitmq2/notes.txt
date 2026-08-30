@@ -1,0 +1,51 @@
+# 1. Start Minikube
+minikube start
+
+# 2. Point your local Docker CLI to Minikube's internal Docker engine
+eval $(minikube docker-env)
+
+# 3. Build your application images directly inside Minikube
+docker build -t producer:latest ./Producer
+docker build -t consumer:latest ./Consumer
+
+minikube image ls
+
+minikube image load docker.io/library/producer:latest
+minikube image load docker.io/library/consumer:latest
+
+kubectl apply -f rabbit-app-stack.yaml
+
+kubectl get pods
+kubectl get pods -w
+
+kubectl logs -f deployment/consumer
+kubectl rollout restart deployment/consumer
+
+minikube service producer-service --url
+
+kubectl exec -it mysql-b4b8c898b-l9nz7 -- mysql -u root -p
+kubectl exec -it mysql-b4b8c898b-l9nz7 -- /opt/mssql-tools/bin/sqlcmd -S localhost -U root -P Password123#
+
+USE ProductDatabase;
+CREATE TABLE IF NOT EXISTS Products (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Name VARCHAR(255) NOT NULL,
+    Description  VARCHAR(255) NOT NULL,
+    Price DECIMAL(18, 2) NOT NULL,
+    Stock INT NOT NULL
+);
+
+kubectl port-forward svc/producer-service 8080:8080
+kubectl port-forward --address 127.0.0.1 pod/<producer-76777d8b59-v42dt> 8080:8080
+
+curl -X POST http://localhost:8080/api/Product/addproduct \
+-H "Content-Type: application/json" \
+-d '{
+  "Name": "Test Product",
+  "Description": "Testing end to end",
+  "Price": 25,
+  "Stock": 5
+}'
+kubectl logs -f <consumer-pod-name>
+'
+

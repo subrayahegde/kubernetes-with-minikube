@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS  `Order` (
+	OrderId INT NOT NULL,
+	ProductId INT NOT NULL,
+	Qty INT,
+	CreatedOn DATETIME 
+);
+
+CREATE TABLE IF NOT EXISTS Product (
+	Id INT NOT NULL AUTO_INCREMENT,
+	Name VARCHAR(255),
+	Description TEXT,
+	Price DECIMAL(8, 2),
+	PRIMARY KEY(id)
+);
+
