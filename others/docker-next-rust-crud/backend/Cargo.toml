@@ -1,0 +1,27 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Async Runtime
+tokio = { version = "1.38", features = ["full"] }
+
+# Web Framework & Middleware Utilities
+axum = "0.7"
+tower-http = { version = "0.5", features = ["cors"] }
+
+# Database Toolkit (Switched from native-tls to pure-rust rustls to fix Alpine compilation)
+sqlx = { version = "0.7", features = [ "runtime-tokio-rustls", "postgres", "macros", "chrono" ] }
+
+# Time serialization support
+chrono = { version = "0.4", features = ["serde"] }
+
+# JSON Parsing & Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Request logging
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
