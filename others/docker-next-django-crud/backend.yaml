@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      hostAliases:
+      - ip: "192.168.49.1" # Default Minikube host IP. Run 'minikube ssh "grep coredns /etc/hosts"' if connection fails.
+        hostnames:
+        - "host.minikube.internal"
+      containers:
+      - name: backend
+        image: backend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DB_NAME
+          value: "clidb"
+        - name: DB_USER
+          value: "postgres"
+        - name: DB_PASSWORD
+          value: "Password123"
+        - name: DB_HOST
+          value: "host.minikube.internal"
+        - name: DB_PORT
+          value: "5432"
+        - name: PORT
+          value: "5000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: LoadBalancer
+
